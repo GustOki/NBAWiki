@@ -111,7 +111,7 @@ function criarBotaoAleatorio() {
   
   const btn = document.createElement("button");
   btn.id = "btn-aleatorio";
-  btn.innerHTML = "🎲 Procurando um time? Sorteie aqui!";
+  btn.innerHTML = "🎲 Procurando um time para torcer? Clique aqui!";
   
   const wrapper = document.getElementById("filtros-wrapper");
   if (wrapper) wrapper.appendChild(btn);

@@ -138,52 +138,84 @@
     <script src="config.js" onerror="console.warn('⚠️ config.js não encontrado')"></script>
     <script src="script.js"></script>
     <script src="gemini-integration.js"></script>
+    
+    <!-- Script de inicialização -->
     <script>
-        window.addEventListener('load', async () => {
-            console.log('🔄 Window load event - inicializando chat');
+        // Função para carregar dados manualmente (caso script.js não carregue)
+        async function garantirDados() {
+            if (window.dados && window.dados.length > 0) {
+                console.log('✅ Dados já carregados:', window.dados.length, 'times');
+                return true;
+            }
             
-            let attempts = 0;
-            const maxAttempts = 50;
+            console.log('📊 Carregando dados...');
             
-            const waitForData = () => {
-                return new Promise((resolve) => {
-                    const checkData = setInterval(() => {
-                        attempts++;
-                        
-                        if (window.dados && window.dados.length > 0) {
-                            console.log(`✅ Dados carregados após ${attempts * 100}ms`);
-                            clearInterval(checkData);
-                            resolve(true);
-                        } else if (attempts >= maxAttempts) {
-                            console.error('❌ Timeout aguardando dados');
-                            clearInterval(checkData);
-                            resolve(false);
-                        }
-                    }, 100);
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                window.dados = await response.json();
+                
+                // Processar dados (mesmo código do script.js)
+                window.dados.forEach(d => {
+                    d.titulos = typeof d.titulos === "number" ? d.titulos : parseInt(d.titulos) || 0;
                 });
-            };
+                
+                window.dados.sort((a, b) => a.nome.localeCompare(b.nome, "pt", { sensitivity: "base" }));
+                
+                console.log('✅ Dados carregados e processados:', window.dados.length, 'times');
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                return false;
+            }
+        }
+        
+        // Aguardar página carregar completamente
+        window.addEventListener('load', async () => {
+            console.log('🔄 Window load - inicializando aplicação');
             
-            const dataLoaded = await waitForData();
+            // 1. Garantir que dados estão carregados
+            const dadosOk = await garantirDados();
             
-            if (!dataLoaded) {
-                console.error('❌ Dados não carregaram - chat desabilitado');
-                const chatButton = document.getElementById('gemini-chat-button');
-                if (chatButton) chatButton.style.display = 'none';
+            if (!dadosOk) {
+                console.error('❌ Falha ao carregar dados - aplicação não pode iniciar');
+                alert('Erro ao carregar dados dos times. Por favor, recarregue a página.');
                 return;
             }
             
+            // 2. Verificar se funções do script.js existem e chamar
+            if (typeof renderCards === 'function' && window.dados) {
+                console.log('🎨 Renderizando cards...');
+                renderCards(window.dados);
+            }
+            
+            // 3. Inicializar chat Gemini
             if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY) {
+                console.log('🤖 Inicializando chat Gemini...');
+                
                 try {
-                    const { assistant, chatUI } = initGeminiAssistant(GEMINI_API_KEY);
-                    console.log('✅ Chat Gemini inicializado com sucesso!');
+                    const result = initGeminiAssistant(GEMINI_API_KEY);
+                    
+                    if (result && result.assistant) {
+                        // Garantir que o assistente tem os dados
+                        result.assistant.loadTeamsData(window.dados);
+                        console.log('✅ Chat Gemini inicializado com sucesso!');
+                    }
                 } catch (error) {
                     console.error('❌ Erro ao inicializar chat:', error);
                 }
             } else {
-                console.warn('⚠️ API Key do Gemini não encontrada. Chat desabilitado.');
+                console.warn('⚠️ API Key não encontrada - chat desabilitado');
                 const chatButton = document.getElementById('gemini-chat-button');
-                if (chatButton) chatButton.style.display = 'none';
+                if (chatButton) {
+                    chatButton.style.display = 'none';
+                }
             }
+            
+            console.log('✅ Aplicação inicializada!');
         });
     </script>
 </body>

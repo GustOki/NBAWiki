@@ -135,28 +135,56 @@
         </div>
     </div>
 
+    <script src="config.js" onerror="console.warn('⚠️ config.js não encontrado')"></script>
     <script src="script.js"></script>
     <script src="gemini-integration.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await carregarDados();
-                
-                if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY) {
+        window.addEventListener('load', async () => {
+            console.log('🔄 Window load event - inicializando chat');
+            
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            const waitForData = () => {
+                return new Promise((resolve) => {
+                    const checkData = setInterval(() => {
+                        attempts++;
+                        
+                        if (window.dados && window.dados.length > 0) {
+                            console.log(`✅ Dados carregados após ${attempts * 100}ms`);
+                            clearInterval(checkData);
+                            resolve(true);
+                        } else if (attempts >= maxAttempts) {
+                            console.error('❌ Timeout aguardando dados');
+                            clearInterval(checkData);
+                            resolve(false);
+                        }
+                    }, 100);
+                });
+            };
+            
+            const dataLoaded = await waitForData();
+            
+            if (!dataLoaded) {
+                console.error('❌ Dados não carregaram - chat desabilitado');
+                const chatButton = document.getElementById('gemini-chat-button');
+                if (chatButton) chatButton.style.display = 'none';
+                return;
+            }
+            
+            if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY) {
+                try {
                     const { assistant, chatUI } = initGeminiAssistant(GEMINI_API_KEY);
                     console.log('✅ Chat Gemini inicializado com sucesso!');
-                } else {
-                    console.warn('⚠️ API Key do Gemini não encontrada. Chat desabilitado.');
-                    const chatButton = document.getElementById('gemini-chat-button');
-                    if (chatButton) {
-                        chatButton.style.display = 'none';
-                    }
+                } catch (error) {
+                    console.error('❌ Erro ao inicializar chat:', error);
                 }
-            } catch (error) {
-                console.error('❌ Erro ao inicializar chat:', error);
+            } else {
+                console.warn('⚠️ API Key do Gemini não encontrada. Chat desabilitado.');
+                const chatButton = document.getElementById('gemini-chat-button');
+                if (chatButton) chatButton.style.display = 'none';
             }
         });
     </script>
-    <script src="config.js" onerror="console.warn('config.js não encontrado - Chat Gemini desabilitado')"></script>
 </body>
 </html>

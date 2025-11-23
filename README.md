@@ -443,6 +443,26 @@ Este projeto foi desenvolvido com auxílio de inteligências artificiais:
 
 ---
 
+### Gemini (Google) 🟠
+
+**Contribuições principais:**
+- Estruturação das páginas HTML e templates semânticos (index.html e componentes)
+- Organização e modularização dos arquivos JavaScript (funções reutilizáveis e padrões de código)
+- Geração de snippets e trechos de código usados diretamente em `index.html` e `script.js`
+- Auxílio na lógica do quiz, sorteio aleatório e persistência de favoritos (LocalStorage)
+- Sugestões práticas de performance (lazy loading, Document Fragment, redução de reflows)
+- Revisões de arquitetura front-end e boas práticas para manutenção e escalabilidade
+
+**Especialidades:**
+- Arquitetura front-end e estruturação de projetos
+- Boas práticas em HTML semântico e manipulação do DOM em JavaScript
+- Produção de exemplos de código e scaffolding para acelerar desenvolvimento
+
+---
+
+**Observação:** as IAs foram utilizadas como ferramentas de apoio ao desenvolvimento (geração de ideias, snippets, revisão e organização). Todo o código final foi adaptado, revisado e integrado manualmente pelo autor do projeto.
+
+
 ## 🎨 Cores dos Times
 
 Cada time possui sua cor oficial na borda do card:

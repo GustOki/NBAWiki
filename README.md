@@ -664,11 +664,11 @@ Este projeto está sob a licença **MIT**.
 
 - **NBA** - Logos oficiais e inspiração
 - **ESPN Brasil** - Descrições e links dos times
-- **Anthropic** - Claude AI (desenvolvimento)
+- **Google** - Gemini AI (desenvolvimento)
+- **Anthropic** - Claude AI (design)
 - **GitHub** - Hospedagem e versionamento
 - **Google Fonts** - Tipografia premium
-- **Comunidade Open Source** - Conhecimento compartilhado
-- **Fãs de basquete** - Feedback e testes
+- **Alura** - Ensino e capacitação de tecnologias
 
 ---
 

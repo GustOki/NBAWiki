@@ -1,14 +1,14 @@
 class GeminiNBAAssistant {
   constructor(apiKey) {
     this.apiKey = apiKey;
-    this.apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    this.apiUrl = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
     this.teamsData = [];
-    console.log('🤖 GeminiNBAAssistant criado com API Key:', this.apiKey ? '✅ Presente' : '❌ Ausente');
+    console.log('🤖 GeminiNBAAssistant criado com modelo gemini-1.5-flash');
   }
 
   loadTeamsData(teams) {
     this.teamsData = teams;
-    console.log(`📊 ${teams.length} times carregados`);
+    console.log(`📊 ${teams.length} times carregados no assistente`);
   }
 
   prepareContext() {
@@ -32,6 +32,18 @@ Para perguntas gerais ou comparações, responda normalmente de forma conversaci
 
   async query(userQuestion) {
     console.log('🔍 Consultando Gemini:', userQuestion);
+    
+    if (!this.teamsData || this.teamsData.length === 0) {
+      console.warn('⚠️ Tentando consultar sem dados carregados, aguardando...');
+      if (window.dados && window.dados.length > 0) {
+        this.loadTeamsData(window.dados);
+      } else {
+        return {
+          type: 'error',
+          message: 'Os dados dos times ainda estão carregando. Aguarde um momento e tente novamente.'
+        };
+      }
+    }
     
     try {
       const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
@@ -57,21 +69,21 @@ Para perguntas gerais ou comparações, responda normalmente de forma conversaci
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Erro da API:', response.status, errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
+        throw new Error(`API Error: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('✅ Resposta recebida:', data);
+      console.log('✅ Resposta recebida do Gemini');
       
       const answer = data.candidates[0].content.parts[0].text;
-      console.log('💬 Resposta do Gemini:', answer);
+      console.log('💬 Resposta:', answer.substring(0, 100) + '...');
       
       return this.parseResponse(answer);
     } catch (error) {
       console.error('❌ Erro ao consultar Gemini:', error);
       return {
         type: 'error',
-        message: `Erro: ${error.message}. Verifique sua API Key.`
+        message: `Erro ao consultar a IA. ${error.message.includes('404') ? 'Modelo não encontrado.' : 'Tente novamente.'}`
       };
     }
   }
@@ -137,29 +149,21 @@ class GeminiChatUI {
     const chatButton = document.getElementById('gemini-chat-button');
     const chatContainer = document.getElementById('gemini-chat-container');
     
-    console.log('🔍 Procurando elementos:', {
-      botao: chatButton ? '✅ Encontrado' : '❌ Não encontrado',
-      container: chatContainer ? '✅ Encontrado' : '❌ Não encontrado'
-    });
-    
     if (!chatButton || !chatContainer) {
       console.error('❌ Elementos do chat não encontrados no DOM');
-      console.log('DOM atual:', document.body.innerHTML.substring(0, 500));
       return;
     }
 
     chatButton.style.display = 'flex';
-    console.log('✅ Botão do chat configurado para display: flex');
+    console.log('✅ Botão do chat visível');
 
     this.attachEventListeners();
     this.renderSuggestions();
     
-    console.log('✅ UI do chat inicializada com sucesso!');
+    console.log('✅ UI do chat inicializada!');
   }
 
   attachEventListeners() {
-    console.log('🔗 Anexando event listeners...');
-    
     const chatButton = document.getElementById('gemini-chat-button');
     const minimizeBtn = document.querySelector('.chat-minimize');
     const sendBtn = document.getElementById('chat-send');
@@ -167,81 +171,58 @@ class GeminiChatUI {
 
     if (chatButton) {
       chatButton.addEventListener('click', (e) => {
-        console.log('🖱️ Botão do chat clicado!');
+        console.log('🖱️ Botão clicado');
         e.preventDefault();
         e.stopPropagation();
         this.toggleChat();
       });
-      console.log('✅ Event listener do botão anexado');
-    } else {
-      console.error('❌ Botão do chat não encontrado para anexar listener');
     }
     
     if (minimizeBtn) {
       minimizeBtn.addEventListener('click', (e) => {
-        console.log('🖱️ Botão minimizar clicado!');
         e.preventDefault();
         e.stopPropagation();
         this.toggleChat();
       });
-      console.log('✅ Event listener do minimizar anexado');
     }
     
     if (sendBtn) {
-      sendBtn.addEventListener('click', () => {
-        console.log('🖱️ Botão enviar clicado!');
-        this.sendMessage();
-      });
-      console.log('✅ Event listener do enviar anexado');
+      sendBtn.addEventListener('click', () => this.sendMessage());
     }
     
     if (input) {
       input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          console.log('⌨️ Enter pressionado!');
-          this.sendMessage();
-        }
+        if (e.key === 'Enter') this.sendMessage();
       });
-      console.log('✅ Event listener do input anexado');
     }
   }
 
   toggleChat() {
-    console.log('🔄 Alternando chat. Estado atual:', this.isOpen ? 'Aberto' : 'Fechado');
-    
     const container = document.getElementById('gemini-chat-container');
     const button = document.getElementById('gemini-chat-button');
     
-    if (!container || !button) {
-      console.error('❌ Elementos não encontrados no toggleChat');
-      return;
-    }
+    if (!container || !button) return;
     
     this.isOpen = !this.isOpen;
     
     if (this.isOpen) {
-      console.log('✅ Abrindo chat...');
+      console.log('✅ Abrindo chat');
       container.classList.add('active');
       button.style.display = 'none';
-      const input = document.getElementById('chat-input');
-      if (input) {
-        setTimeout(() => input.focus(), 300);
-      }
+      setTimeout(() => {
+        const input = document.getElementById('chat-input');
+        if (input) input.focus();
+      }, 300);
     } else {
-      console.log('✅ Fechando chat...');
+      console.log('✅ Fechando chat');
       container.classList.remove('active');
       button.style.display = 'flex';
     }
-    
-    console.log('✅ Chat alternado. Novo estado:', this.isOpen ? 'Aberto' : 'Fechado');
   }
 
   renderSuggestions() {
     const container = document.getElementById('chat-suggestions');
-    if (!container) {
-      console.warn('⚠️ Container de sugestões não encontrado');
-      return;
-    }
+    if (!container) return;
     
     const suggestions = this.assistant.getSuggestions();
     
@@ -269,17 +250,12 @@ class GeminiChatUI {
   }
 
   async sendMessage() {
-    console.log('📤 Enviando mensagem...');
-    
     const input = document.getElementById('chat-input');
     const message = input?.value.trim();
     
-    if (!message) {
-      console.warn('⚠️ Mensagem vazia, ignorando');
-      return;
-    }
+    if (!message) return;
 
-    console.log('💬 Mensagem:', message);
+    console.log('📤 Enviando:', message);
     
     this.addMessage(message, 'user');
     input.value = '';
@@ -288,7 +264,7 @@ class GeminiChatUI {
 
     try {
       const response = await this.assistant.query(message);
-      console.log('📥 Resposta recebida:', response);
+      console.log('📥 Resposta tipo:', response.type);
       
       this.hideTypingIndicator();
       
@@ -311,7 +287,7 @@ class GeminiChatUI {
       }
       
     } catch (error) {
-      console.error('❌ Erro ao enviar mensagem:', error);
+      console.error('❌ Erro:', error);
       this.hideTypingIndicator();
       this.addMessage('Desculpe, ocorreu um erro. Tente novamente.', 'assistant error');
     }
@@ -319,10 +295,7 @@ class GeminiChatUI {
 
   addMessage(text, sender) {
     const messagesContainer = document.getElementById('chat-messages');
-    if (!messagesContainer) {
-      console.error('❌ Container de mensagens não encontrado');
-      return;
-    }
+    if (!messagesContainer) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}`;
@@ -334,7 +307,6 @@ class GeminiChatUI {
     
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    console.log('✅ Mensagem adicionada:', sender);
   }
 
   addActionButton(text, onClick) {
@@ -384,7 +356,6 @@ window.GeminiChatUI = GeminiChatUI;
 
 window.initGeminiAssistant = function(apiKey) {
   console.log('🚀 Iniciando Gemini Assistant...');
-  console.log('📊 Dados disponíveis:', window.dados ? `✅ ${window.dados.length} times` : '❌ Não carregados');
   
   if (!apiKey) {
     console.error('❌ API Key não fornecida!');
@@ -393,14 +364,25 @@ window.initGeminiAssistant = function(apiKey) {
   
   const assistant = new GeminiNBAAssistant(apiKey);
   
-  if (window.dados) {
+  if (window.dados && window.dados.length > 0) {
     assistant.loadTeamsData(window.dados);
+    console.log('✅ Dados carregados imediatamente');
   } else {
-    console.warn('⚠️ Dados dos times ainda não carregados');
+    console.log('⏳ Aguardando dados dos times...');
+    // Aguardar dados ficarem disponíveis
+    const checkData = setInterval(() => {
+      if (window.dados && window.dados.length > 0) {
+        assistant.loadTeamsData(window.dados);
+        console.log('✅ Dados carregados após aguardar');
+        clearInterval(checkData);
+      }
+    }, 100);
+    
+    setTimeout(() => clearInterval(checkData), 5000);
   }
   
   const chatUI = new GeminiChatUI(assistant);
   
-  console.log('✅ Assistente Gemini inicializado com sucesso!');
+  console.log('✅ Assistente Gemini pronto!');
   return { assistant, chatUI };
 };

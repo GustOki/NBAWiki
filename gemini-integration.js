@@ -111,68 +111,21 @@ class GeminiChatUI {
   constructor(assistant) {
     this.assistant = assistant;
     this.isOpen = false;
-    this.createUI();
+    this.initUI();
   }
 
-  createUI() {
-    const chatContainer = document.createElement('div');
-    chatContainer.id = 'gemini-chat-container';
-    chatContainer.className = 'gemini-chat-container';
-    chatContainer.innerHTML = `
-      <div class="chat-header">
-        <div class="chat-title">
-          <span class="ai-icon">🤖</span>
-          <span>Assistente NBA</span>
-          <span class="powered-by">Powered by Gemini</span>
-        </div>
-        <button class="chat-minimize" aria-label="Minimizar">−</button>
-      </div>
-      <div class="chat-messages" id="chat-messages">
-        <div class="chat-message assistant">
-          <div class="message-content">
-            <p>👋 Olá! Sou seu assistente inteligente de NBA! Posso ajudar você a:</p>
-            <ul>
-              <li>Encontrar times por características</li>
-              <li>Comparar estatísticas</li>
-              <li>Recomendar times para torcer</li>
-              <li>Responder curiosidades</li>
-            </ul>
-            <p>Experimente perguntar algo!</p>
-          </div>
-        </div>
-        <div class="suggestions" id="chat-suggestions"></div>
-      </div>
-      <div class="chat-input-container">
-        <input 
-          type="text" 
-          id="chat-input" 
-          placeholder="Pergunte sobre times da NBA..."
-          aria-label="Campo de pergunta"
-        />
-        <button id="chat-send" aria-label="Enviar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-        </button>
-      </div>
-    `;
+  initUI() {
+    const chatButton = document.getElementById('gemini-chat-button');
+    const chatContainer = document.getElementById('gemini-chat-container');
+    
+    if (!chatButton || !chatContainer) {
+      console.error('❌ Elementos do chat não encontrados no HTML');
+      return;
+    }
 
-    document.body.appendChild(chatContainer);
-
-    const chatButton = document.createElement('button');
-    chatButton.id = 'gemini-chat-button';
-    chatButton.className = 'gemini-chat-button';
-    chatButton.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18c-1.38 0-2.68-.29-3.86-.82l-.28-.13-2.76.47.47-2.76-.13-.28C4.29 14.68 4 13.38 4 12c0-4.41 3.59-8 8-8s8 3.59 8 8-3.59 8-8 8z"/>
-        <circle cx="9" cy="12" r="1"/>
-        <circle cx="12" cy="12" r="1"/>
-        <circle cx="15" cy="12" r="1"/>
-      </svg>
-      <span class="notification-badge">AI</span>
-    `;
-    chatButton.setAttribute('aria-label', 'Abrir chat do assistente');
-    document.body.appendChild(chatButton);
+    chatButton.style.display = 'flex';
+    
+    console.log('✅ Elementos do chat encontrados e configurados');
 
     this.attachEventListeners();
     this.renderSuggestions();
@@ -180,17 +133,27 @@ class GeminiChatUI {
 
   attachEventListeners() {
     const chatButton = document.getElementById('gemini-chat-button');
-    const chatContainer = document.getElementById('gemini-chat-container');
     const minimizeBtn = document.querySelector('.chat-minimize');
     const sendBtn = document.getElementById('chat-send');
     const input = document.getElementById('chat-input');
 
-    chatButton.addEventListener('click', () => this.toggleChat());
-    minimizeBtn.addEventListener('click', () => this.toggleChat());
-    sendBtn.addEventListener('click', () => this.sendMessage());
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') this.sendMessage();
-    });
+    if (chatButton) {
+      chatButton.addEventListener('click', () => this.toggleChat());
+    }
+    
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', () => this.toggleChat());
+    }
+    
+    if (sendBtn) {
+      sendBtn.addEventListener('click', () => this.sendMessage());
+    }
+    
+    if (input) {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.sendMessage();
+      });
+    }
   }
 
   toggleChat() {
@@ -202,7 +165,7 @@ class GeminiChatUI {
     if (this.isOpen) {
       container.classList.add('active');
       button.style.display = 'none';
-      document.getElementById('chat-input').focus();
+      document.getElementById('chat-input')?.focus();
     } else {
       container.classList.remove('active');
       button.style.display = 'flex';
@@ -211,6 +174,8 @@ class GeminiChatUI {
 
   renderSuggestions() {
     const container = document.getElementById('chat-suggestions');
+    if (!container) return;
+    
     const suggestions = this.assistant.getSuggestions();
     
     container.innerHTML = `
@@ -225,15 +190,18 @@ class GeminiChatUI {
     container.querySelectorAll('.suggestion-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const suggestion = chip.getAttribute('data-suggestion');
-        document.getElementById('chat-input').value = suggestion;
-        this.sendMessage();
+        const input = document.getElementById('chat-input');
+        if (input) {
+          input.value = suggestion;
+          this.sendMessage();
+        }
       });
     });
   }
 
   async sendMessage() {
     const input = document.getElementById('chat-input');
-    const message = input.value.trim();
+    const message = input?.value.trim();
     
     if (!message) return;
 
@@ -249,10 +217,14 @@ class GeminiChatUI {
       
       if (response.type === 'filter' && response.teams.length > 0) {
         this.addMessage(response.message || `Encontrei ${response.teams.length} time(s) para você!`, 'assistant');
-        window.renderCards(response.teams);
+        if (window.renderCards) {
+          window.renderCards(response.teams);
+        }
         
         this.addActionButton('Ver todos os times', () => {
-          window.renderCards(window.dados);
+          if (window.renderCards && window.dados) {
+            window.renderCards(window.dados);
+          }
         });
         
       } else if (response.type === 'conversation') {
@@ -269,6 +241,8 @@ class GeminiChatUI {
 
   addMessage(text, sender) {
     const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return;
+    
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}`;
     messageDiv.innerHTML = `
@@ -283,6 +257,8 @@ class GeminiChatUI {
 
   addActionButton(text, onClick) {
     const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return;
+    
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'chat-message assistant';
     buttonDiv.innerHTML = `
@@ -292,12 +268,17 @@ class GeminiChatUI {
     `;
     
     messagesContainer.appendChild(buttonDiv);
-    buttonDiv.querySelector('.action-button').addEventListener('click', onClick);
+    const actionButton = buttonDiv.querySelector('.action-button');
+    if (actionButton) {
+      actionButton.addEventListener('click', onClick);
+    }
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
   showTypingIndicator() {
     const messagesContainer = document.getElementById('chat-messages');
+    if (!messagesContainer) return;
+    
     const indicator = document.createElement('div');
     indicator.id = 'typing-indicator';
     indicator.className = 'chat-message assistant';
@@ -318,7 +299,6 @@ class GeminiChatUI {
 
 window.GeminiNBAAssistant = GeminiNBAAssistant;
 window.GeminiChatUI = GeminiChatUI;
-
 window.initGeminiAssistant = function(apiKey) {
   const assistant = new GeminiNBAAssistant(apiKey);
   assistant.loadTeamsData(window.dados);

@@ -737,8 +737,6 @@ Este projeto está sob a licença **MIT**.
 
 **Desenvolvido por Gustavo Oki**
 
-**Powered by Claude AI 🟣**
-
 © 2025 - Todos os direitos reservados
 
 ---

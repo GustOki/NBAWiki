@@ -292,6 +292,20 @@ function criarTimelineSection() {
   const main = document.querySelector("main");
   if (!main) return;
   
+  let featuresGrid = document.getElementById("features-grid");
+  if (!featuresGrid) {
+    featuresGrid = document.createElement("div");
+    featuresGrid.id = "features-grid";
+    featuresGrid.className = "features-grid";
+    
+    const cardContainer = main.querySelector(".card-container");
+    if (cardContainer) {
+      main.insertBefore(featuresGrid, cardContainer);
+    } else {
+      main.appendChild(featuresGrid);
+    }
+  }
+  
   const section = document.createElement("section");
   section.id = "timeline-section";
   section.className = "feature-section";
@@ -309,12 +323,7 @@ function criarTimelineSection() {
     <div id="timeline-content" class="timeline-content"></div>
   `;
   
-  const cardContainer = main.querySelector(".card-container");
-  if (cardContainer) {
-    main.insertBefore(section, cardContainer);
-  } else {
-    main.appendChild(section);
-  }
+  featuresGrid.appendChild(section);
   
   let anoAtual = 2024;
   const campeoesPorAno = gerarCampeoesPorAno();
@@ -392,6 +401,20 @@ function criarQuizSection() {
   const main = document.querySelector("main");
   if (!main) return;
   
+  let featuresGrid = document.getElementById("features-grid");
+  if (!featuresGrid) {
+    featuresGrid = document.createElement("div");
+    featuresGrid.id = "features-grid";
+    featuresGrid.className = "features-grid";
+    
+    const cardContainer = main.querySelector(".card-container");
+    if (cardContainer) {
+      main.insertBefore(featuresGrid, cardContainer);
+    } else {
+      main.appendChild(featuresGrid);
+    }
+  }
+  
   const section = document.createElement("section");
   section.id = "quiz-section";
   section.className = "feature-section";
@@ -406,12 +429,7 @@ function criarQuizSection() {
     </div>
   `;
   
-  const cardContainer = main.querySelector(".card-container");
-  if (cardContainer) {
-    main.insertBefore(section, cardContainer);
-  } else {
-    main.appendChild(section);
-  }
+  featuresGrid.appendChild(section);
   
   document.getElementById("btn-iniciar-quiz")?.addEventListener("click", iniciarQuiz);
 }
@@ -505,6 +523,8 @@ function iniciarQuiz() {
   
   function mostrarResultado() {
     const timeRecomendado = calcularTimeRecomendado(respostas);
+    const cardId = `card-${timeRecomendado.nome.replace(/\s+/g, '-')}`;
+    
     container.innerHTML = `
       <div class="quiz-result">
         <h4>🎊 Seu Time Ideal É:</h4>
@@ -517,16 +537,29 @@ function iniciarQuiz() {
             <span>📍 ${timeRecomendado.conferencia} - ${timeRecomendado.divisao}</span>
           </div>
           <div class="quiz-result-actions">
-            <button class="btn-primary" onclick="document.getElementById('card-${timeRecomendado.nome.replace(/\s+/g, '-')}')?.scrollIntoView({behavior:'smooth'})">
-              Ver Time
-            </button>
-            <button class="btn-secondary" onclick="criarQuizSection(); document.getElementById('btn-iniciar-quiz').click()">
-              Refazer Quiz
-            </button>
+            <button class="btn-primary" id="btn-ver-time">Ver Time</button>
+            <button class="btn-secondary" id="btn-refazer-quiz">Refazer Quiz</button>
           </div>
         </div>
       </div>
     `;
+    
+    document.getElementById("btn-ver-time")?.addEventListener("click", () => {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.boxShadow = '0 0 50px rgba(200,16,46,0.6)';
+        setTimeout(() => {
+          card.style.boxShadow = '';
+        }, 2000);
+      }
+    });
+    
+    document.getElementById("btn-refazer-quiz")?.addEventListener("click", () => {
+      respostas = [];
+      perguntaAtual = 0;
+      mostrarPergunta();
+    });
   }
   
   mostrarPergunta();
@@ -539,13 +572,21 @@ function calcularTimeRecomendado(respostas) {
     let score = 0;
     
     respostas.forEach(resp => {
-      if (resp.conferencia && time.conferencia === resp.conferencia) score += 3;
-      if (resp.divisao && time.divisao === resp.divisao) score += 2;
+      if (resp.conferencia && time.conferencia === resp.conferencia) {
+        score += 10;
+      }
+      
+      if (resp.divisao && time.divisao === resp.divisao) {
+        score += 8;
+      }
+      
       if (resp.titulos !== undefined) {
         const diff = Math.abs(time.titulos - resp.titulos);
-        score += Math.max(0, 5 - diff);
+        score += Math.max(0, 7 - diff);
       }
     });
+    
+    score += Math.random() * 0.5;
     
     scores[time.nome] = score;
   });
@@ -696,6 +737,7 @@ async function escolherTimeAleatorioAnimated() {
   if (isShuffling || !dados.length) return;
   isShuffling = true;
   
+  // Remove botão voltar se existir
   document.getElementById("btn-voltar-todos")?.remove();
   
   const steps = 20;

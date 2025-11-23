@@ -372,7 +372,7 @@ Isso significa que você pode:
 
 ### [🌐 **ACESSE O SITE AGORA**](https://gustoki.github.io/NBAWiki/)
 
-**Desenvolvido com 🏀 e ☕ por Gustavo Oki**
+**Desenvolvido por Gustavo Oki**
 
 **Powered by Google Gemini 🤖 & Claude AI 🎨**
 

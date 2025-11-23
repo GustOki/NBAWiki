@@ -729,7 +729,11 @@ Este projeto está sob a licença **MIT**.
 
 <div align="center">
 
+## ⭐ Se você gostou do projeto, deixe uma estrela!
 
+### [🌐 **ACESSE O SITE AGORA**](https://gustoki.github.io/NBAWiki/)
+
+---
 
 **Desenvolvido por Gustavo Oki**
 

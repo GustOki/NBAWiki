@@ -275,7 +275,6 @@ function mostrarFavoritos() {
   const timesFavoritos = dados.filter(d => favoritos.includes(d.nome));
   renderCards(timesFavoritos);
   
-  // Adiciona botão voltar
   const btnVoltar = document.getElementById("btn-voltar-todos");
   if (!btnVoltar) criarBotaoVoltar();
 }
@@ -291,6 +290,8 @@ function criarTimelineSection() {
   if (document.getElementById("timeline-section")) return;
   
   const main = document.querySelector("main");
+  if (!main) return;
+  
   const section = document.createElement("section");
   section.id = "timeline-section";
   section.className = "feature-section";
@@ -308,7 +309,12 @@ function criarTimelineSection() {
     <div id="timeline-content" class="timeline-content"></div>
   `;
   
-  main?.insertBefore(section, cardContainer.parentElement);
+  const cardContainer = main.querySelector(".card-container");
+  if (cardContainer) {
+    main.insertBefore(section, cardContainer);
+  } else {
+    main.appendChild(section);
+  }
   
   let anoAtual = 2024;
   const campeoesPorAno = gerarCampeoesPorAno();
@@ -384,6 +390,8 @@ function criarQuizSection() {
   if (document.getElementById("quiz-section")) return;
   
   const main = document.querySelector("main");
+  if (!main) return;
+  
   const section = document.createElement("section");
   section.id = "quiz-section";
   section.className = "feature-section";
@@ -398,7 +406,12 @@ function criarQuizSection() {
     </div>
   `;
   
-  main?.insertBefore(section, cardContainer.parentElement);
+  const cardContainer = main.querySelector(".card-container");
+  if (cardContainer) {
+    main.insertBefore(section, cardContainer);
+  } else {
+    main.appendChild(section);
+  }
   
   document.getElementById("btn-iniciar-quiz")?.addEventListener("click", iniciarQuiz);
 }

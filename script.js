@@ -312,7 +312,7 @@ function criarTimelineSection() {
   
   section.innerHTML = `
     <div class="section-header">
-      <h3>📅 LINHA DO TEMPO DOS CAMPEÕES</h3>
+      <h3>LINHA DO TEMPO DOS CAMPEÕES</h3>
       <p>Explore a história dos últimos 20 anos da NBA</p>
     </div>
     <div class="timeline-controls">
@@ -421,7 +421,7 @@ function criarQuizSection() {
   
   section.innerHTML = `
     <div class="section-header">
-      <h3>🎯 QUIZ: QUAL TIME COMBINA COM VOCÊ?</h3>
+      <h3>QUAL TIME COMBINA COM VOCÊ?</h3>
       <p>Responda 5 perguntas e descubra seu time ideal!</p>
     </div>
     <div id="quiz-container">

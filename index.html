@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="gemini-chat.css"> 
 
     <title>NBAWiki - Guia dos Times da NBA</title>
 
@@ -61,6 +62,10 @@
     </footer>
 
     <script src="script.js"></script>
-
+    <script src="gemini-integration.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const { assistant, chatUI } = initGeminiAssistant(GEMINI_API_KEY);
+    </script>
 </body>
 </html>

@@ -10,6 +10,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -21,6 +25,7 @@ jobs:
       - name: Create config.js with API Key
         run: |
           echo "const GEMINI_API_KEY = '${{ secrets.GEMINI_API_KEY }}';" > config.js
+          echo "✅ config.js criado com API Key"
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

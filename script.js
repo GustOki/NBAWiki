@@ -3,6 +3,7 @@ const campoBusca = document.querySelector("header input");
 const headerEl = document.querySelector("header");
 let dados = [];
 let isShuffling = false;
+let favoritos = JSON.parse(localStorage.getItem('nbawiki-favoritos')) || [];
 
 function getTeamLogo(time) {
   if (typeof time === 'object' && time.logo) {
@@ -27,6 +28,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   criarBotaoAleatorio();
   await carregarDados();
   criarStatsBar();
+  criarTimelineSection();
+  criarQuizSection();
   renderCards(dados);
   
   campoBusca?.addEventListener("input", debounce(iniciarBusca, 200));
@@ -86,6 +89,7 @@ function criarUIFiltros() {
       <option value="titulos-asc">📊 Menos títulos</option>
       <option value="fundacao">📅 Mais antigo</option>
     </select>
+    <button id="btn-favoritos" title="Ver apenas favoritos">⭐ Favoritos (${favoritos.length})</button>
     <button id="btn-reset-filtros">✕ Limpar</button>
   `;
   
@@ -95,6 +99,8 @@ function criarUIFiltros() {
   ["filter-conferencia","filter-divisao","filter-titulos","filter-ordem"].forEach(id => {
     document.getElementById(id)?.addEventListener("change", iniciarBusca);
   });
+  
+  document.getElementById("btn-favoritos")?.addEventListener("click", mostrarFavoritos);
   
   document.getElementById("btn-reset-filtros")?.addEventListener("click", () => {
     if (campoBusca) campoBusca.value = "";
@@ -111,7 +117,7 @@ function criarBotaoAleatorio() {
   
   const btn = document.createElement("button");
   btn.id = "btn-aleatorio";
-  btn.innerHTML = "🎲 Procurando um time para torcer? Clique aqui!";
+  btn.innerHTML = "🎲 Procurando um time? Sorteie aqui!";
   
   const wrapper = document.getElementById("filtros-wrapper");
   if (wrapper) wrapper.appendChild(btn);
@@ -244,6 +250,297 @@ function fecharModal() {
   }
 }
 
+function toggleFavorito(nomeTime) {
+  const index = favoritos.indexOf(nomeTime);
+  if (index > -1) {
+    favoritos.splice(index, 1);
+  } else {
+    favoritos.push(nomeTime);
+  }
+  localStorage.setItem('nbawiki-favoritos', JSON.stringify(favoritos));
+  atualizarBotaoFavoritos();
+  renderCards(dados.filter(d => campoBusca.value || filtrosAtivos() ? true : true));
+}
+
+function atualizarBotaoFavoritos() {
+  const btn = document.getElementById("btn-favoritos");
+  if (btn) btn.innerHTML = `⭐ Favoritos (${favoritos.length})`;
+}
+
+function mostrarFavoritos() {
+  if (favoritos.length === 0) {
+    alert("Você ainda não tem times favoritos! Clique no ❤️ nos cards para adicionar.");
+    return;
+  }
+  const timesFavoritos = dados.filter(d => favoritos.includes(d.nome));
+  renderCards(timesFavoritos);
+  
+  // Adiciona botão voltar
+  const btnVoltar = document.getElementById("btn-voltar-todos");
+  if (!btnVoltar) criarBotaoVoltar();
+}
+
+function filtrosAtivos() {
+  const conf = document.getElementById("filter-conferencia")?.value;
+  const div = document.getElementById("filter-divisao")?.value;
+  const tit = document.getElementById("filter-titulos")?.value;
+  return conf !== "Todos" || div !== "Todos" || tit !== "Todos";
+}
+
+function criarTimelineSection() {
+  if (document.getElementById("timeline-section")) return;
+  
+  const main = document.querySelector("main");
+  const section = document.createElement("section");
+  section.id = "timeline-section";
+  section.className = "feature-section";
+  
+  section.innerHTML = `
+    <div class="section-header">
+      <h3>📅 LINHA DO TEMPO DOS CAMPEÕES</h3>
+      <p>Explore a história dos últimos 20 anos da NBA</p>
+    </div>
+    <div class="timeline-controls">
+      <button id="timeline-prev">←</button>
+      <div id="timeline-year" class="timeline-year">2024</div>
+      <button id="timeline-next">→</button>
+    </div>
+    <div id="timeline-content" class="timeline-content"></div>
+  `;
+  
+  main?.insertBefore(section, cardContainer.parentElement);
+  
+  let anoAtual = 2024;
+  const campeoesPorAno = gerarCampeoesPorAno();
+  
+  function atualizarTimeline() {
+    const campeao = campeoesPorAno[anoAtual];
+    const content = document.getElementById("timeline-content");
+    const yearEl = document.getElementById("timeline-year");
+    
+    if (yearEl) yearEl.textContent = anoAtual;
+    
+    if (content && campeao) {
+      const time = dados.find(d => d.nome === campeao);
+      if (time) {
+        content.innerHTML = `
+          <div class="timeline-champion" data-team="${time.nome.toLowerCase().replace(/\s+/g, '-')}">
+            <img src="${getTeamLogo(time)}" alt="${time.nome}" class="timeline-logo">
+            <h4>${time.nome}</h4>
+            <p class="timeline-desc">${time.descricao}</p>
+            <div class="timeline-stats">
+              <span>🏆 ${time.titulos} títulos totais</span>
+              <span>📍 ${time.conferencia} - ${time.divisao}</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+  
+  document.getElementById("timeline-prev")?.addEventListener("click", () => {
+    if (anoAtual > 2005) {
+      anoAtual--;
+      atualizarTimeline();
+    }
+  });
+  
+  document.getElementById("timeline-next")?.addEventListener("click", () => {
+    if (anoAtual < 2024) {
+      anoAtual++;
+      atualizarTimeline();
+    }
+  });
+  
+  atualizarTimeline();
+}
+
+function gerarCampeoesPorAno() {
+  return {
+    2024: "Boston Celtics",
+    2023: "Denver Nuggets",
+    2022: "Golden State Warriors",
+    2021: "Milwaukee Bucks",
+    2020: "Los Angeles Lakers",
+    2019: "Toronto Raptors",
+    2018: "Golden State Warriors",
+    2017: "Golden State Warriors",
+    2016: "Cleveland Cavaliers",
+    2015: "Golden State Warriors",
+    2014: "San Antonio Spurs",
+    2013: "Miami Heat",
+    2012: "Miami Heat",
+    2011: "Dallas Mavericks",
+    2010: "Los Angeles Lakers",
+    2009: "Los Angeles Lakers",
+    2008: "Boston Celtics",
+    2007: "San Antonio Spurs",
+    2006: "Miami Heat",
+    2005: "San Antonio Spurs"
+  };
+}
+
+function criarQuizSection() {
+  if (document.getElementById("quiz-section")) return;
+  
+  const main = document.querySelector("main");
+  const section = document.createElement("section");
+  section.id = "quiz-section";
+  section.className = "feature-section";
+  
+  section.innerHTML = `
+    <div class="section-header">
+      <h3>🎯 QUIZ: QUAL TIME COMBINA COM VOCÊ?</h3>
+      <p>Responda 5 perguntas e descubra seu time ideal!</p>
+    </div>
+    <div id="quiz-container">
+      <button id="btn-iniciar-quiz" class="btn-primary">🎮 Iniciar Quiz</button>
+    </div>
+  `;
+  
+  main?.insertBefore(section, cardContainer.parentElement);
+  
+  document.getElementById("btn-iniciar-quiz")?.addEventListener("click", iniciarQuiz);
+}
+
+function iniciarQuiz() {
+  const container = document.getElementById("quiz-container");
+  if (!container) return;
+  
+  const perguntas = [
+    {
+      q: "Qual estilo de jogo você prefere?",
+      opcoes: [
+        { texto: "🏃 Jogo rápido e corrido", peso: { conferencia: "Oeste", titulos: 5 } },
+        { texto: "🛡️ Defesa forte e tática", peso: { conferencia: "Leste", titulos: 10 } },
+        { texto: "⭐ Star power e espetáculo", peso: { conferencia: "Oeste", divisao: "Pacific" } },
+        { texto: "🤝 Trabalho em equipe", peso: { conferencia: "Leste", divisao: "Central" } }
+      ]
+    },
+    {
+      q: "Que tipo de história te atrai?",
+      opcoes: [
+        { texto: "👑 Dinastia vitoriosa", peso: { titulos: 15 } },
+        { texto: "📈 Time em ascensão", peso: { titulos: 3 } },
+        { texto: "💔 Azarão buscando glória", peso: { titulos: 0 } },
+        { texto: "🔄 Tradição consistente", peso: { titulos: 8 } }
+      ]
+    },
+    {
+      q: "Qual região dos EUA te agrada?",
+      opcoes: [
+        { texto: "🌴 Costa Oeste", peso: { conferencia: "Oeste", divisao: "Pacific" } },
+        { texto: "🏙️ Costa Leste", peso: { conferencia: "Leste", divisao: "Atlantic" } },
+        { texto: "🌾 Centro-Oeste", peso: { divisao: "Central" } },
+        { texto: "🤠 Sul", peso: { divisao: "Southwest" } }
+      ]
+    },
+    {
+      q: "O que mais importa em um time?",
+      opcoes: [
+        { texto: "🏆 Quantidade de títulos", peso: { titulos: 12 } },
+        { texto: "🎨 Cores e identidade visual", peso: {} },
+        { texto: "🌆 Cidade/Cultura local", peso: {} },
+        { texto: "📊 Desempenho recente", peso: { titulos: 5 } }
+      ]
+    },
+    {
+      q: "Seu estilo de torcedor:",
+      opcoes: [
+        { texto: "🔥 Fanático apaixonado", peso: { titulos: 8 } },
+        { texto: "🧠 Analista técnico", peso: { conferencia: "Leste" } },
+        { texto: "🎉 Curtidor casual", peso: { divisao: "Pacific" } },
+        { texto: "💪 Fiel na derrota", peso: { titulos: 2 } }
+      ]
+    }
+  ];
+  
+  let respostas = [];
+  let perguntaAtual = 0;
+  
+  function mostrarPergunta() {
+    const p = perguntas[perguntaAtual];
+    container.innerHTML = `
+      <div class="quiz-progress">
+        <div class="quiz-progress-bar" style="width: ${((perguntaAtual + 1) / perguntas.length) * 100}%"></div>
+      </div>
+      <div class="quiz-question">
+        <h4>Pergunta ${perguntaAtual + 1}/${perguntas.length}</h4>
+        <p>${p.q}</p>
+        <div class="quiz-options">
+          ${p.opcoes.map((op, i) => `
+            <button class="quiz-option" data-index="${i}">${op.texto}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    
+    container.querySelectorAll(".quiz-option").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const idx = parseInt(e.target.dataset.index);
+        respostas.push(p.opcoes[idx].peso);
+        perguntaAtual++;
+        
+        if (perguntaAtual < perguntas.length) {
+          mostrarPergunta();
+        } else {
+          mostrarResultado();
+        }
+      });
+    });
+  }
+  
+  function mostrarResultado() {
+    const timeRecomendado = calcularTimeRecomendado(respostas);
+    container.innerHTML = `
+      <div class="quiz-result">
+        <h4>🎊 Seu Time Ideal É:</h4>
+        <div class="quiz-result-team">
+          <img src="${getTeamLogo(timeRecomendado)}" alt="${timeRecomendado.nome}" class="quiz-result-logo">
+          <h3>${timeRecomendado.nome}</h3>
+          <p>${timeRecomendado.descricao}</p>
+          <div class="quiz-result-stats">
+            <span>🏆 ${timeRecomendado.titulos} títulos</span>
+            <span>📍 ${timeRecomendado.conferencia} - ${timeRecomendado.divisao}</span>
+          </div>
+          <div class="quiz-result-actions">
+            <button class="btn-primary" onclick="document.getElementById('card-${timeRecomendado.nome.replace(/\s+/g, '-')}')?.scrollIntoView({behavior:'smooth'})">
+              Ver Time
+            </button>
+            <button class="btn-secondary" onclick="criarQuizSection(); document.getElementById('btn-iniciar-quiz').click()">
+              Refazer Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  mostrarPergunta();
+}
+
+function calcularTimeRecomendado(respostas) {
+  const scores = {};
+  
+  dados.forEach(time => {
+    let score = 0;
+    
+    respostas.forEach(resp => {
+      if (resp.conferencia && time.conferencia === resp.conferencia) score += 3;
+      if (resp.divisao && time.divisao === resp.divisao) score += 2;
+      if (resp.titulos !== undefined) {
+        const diff = Math.abs(time.titulos - resp.titulos);
+        score += Math.max(0, 5 - diff);
+      }
+    });
+    
+    scores[time.nome] = score;
+  });
+  
+  const melhorTime = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+  return dados.find(d => d.nome === melhorTime);
+}
+
 async function carregarDados() {
   if (dados.length) return;
   
@@ -327,6 +624,7 @@ function renderCards(lista) {
   lista.forEach((d, i) => {
     const card = document.createElement("article");
     card.className = "card";
+    card.id = `card-${d.nome.replace(/\s+/g, '-')}`;
     card.style.animationDelay = `${Math.min(i * 0.05, 0.3)}s`;
     
     const teamSlug = d.nome.toLowerCase()
@@ -344,8 +642,12 @@ function renderCards(lista) {
       : `<span class="titulos-badge zero">0 títulos</span>`;
     
     const logoUrl = getTeamLogo(d);
+    const isFavorito = favoritos.includes(d.nome);
     
     card.innerHTML = `
+      <button class="btn-favorito ${isFavorito ? 'active' : ''}" data-time="${d.nome}" title="Adicionar aos favoritos">
+        ${isFavorito ? '❤️' : '🤍'}
+      </button>
       <img class="logo-time" src="${logoUrl}" alt="${d.nome}" width="80" height="80" loading="lazy"
            onerror="this.onerror=null;this.src='${gerarPlaceholderDataURL(d.nome)}'">
       <div class="card-content">
@@ -364,10 +666,19 @@ function renderCards(lista) {
     `;
     
     frag.appendChild(card);
+    
+    const btnFav = card.querySelector(".btn-favorito");
+    btnFav?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFavorito(d.nome);
+      btnFav.classList.toggle('active');
+      btnFav.textContent = favoritos.includes(d.nome) ? '❤️' : '🤍';
+    });
   });
   
   cardContainer.appendChild(frag);
 }
+
 async function escolherTimeAleatorioAnimated() {
   if (isShuffling || !dados.length) return;
   isShuffling = true;

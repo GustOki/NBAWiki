@@ -441,7 +441,6 @@ Este projeto foi desenvolvido com auxílio de inteligências artificiais:
 - UX/UI design moderno
 - Code review e refatoração
 
----
 
 ### Gemini (Google) 🟠
 
